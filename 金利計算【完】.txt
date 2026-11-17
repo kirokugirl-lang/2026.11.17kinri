@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>普通預金 利息計算</title>
+
+﻿
+
+<style>
+
+* { box-sizing: border-box; }
+
+
+
+body {
+
+  margin: 0;
+
+  padding: 20px 14px 40px;
+
+  background: #f4f6f8;
+
+  color: #333;
+
+  font-family: sans-serif;
+
+}
+
+
+
+.container {
+
+  max-width: 420px;
+
+  margin: auto;
+
+}
+
+
+
+h1 {
+
+  font-size: 22px;
+
+  text-align: center;
+
+  margin: 12px 0 8px;
+
+}
+
+
+
+.subtitle {
+
+  text-align: center;
+
+  color: #777;
+
+  font-size: 13px;
+
+  margin-bottom: 25px;
+
+}
+
+
+
+.section {
+
+  background: white;
+
+  border-radius: 12px;
+
+  padding: 18px;
+
+  margin-bottom: 15px;
+
+  box-shadow: 0 2px 7px rgba(0,0,0,0.04);
+
+}
+
+
+
+.label {
+
+  display: block;
+
+  font-weight: bold;
+
+  font-size: 14px;
+
+  margin-bottom: 9px;
+
+}
+
+
+
+select, input {
+
+  width: 100%;
+
+  height: 48px;
+
+  border: 1px solid #ccc;
+
+  border-radius: 8px;
+
+  padding: 0 12px;
+
+  font-size: 17px;
+
+  background: white;
+
+  color: #333;
+
+}
+
+
+
+.unit {
+
+  font-size: 12px;
+
+  color: #888;
+
+  margin-top: 6px;
+
+}
+
+
+
+.periods {
+
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 8px;
+
+}
+
+
+
+.period-button {
+
+  background: white;
+
+  border: 1px solid #bbb;
+
+  border-radius: 9px;
+
+  padding: 14px 2px;
+
+  font-size: 14px;
+
+  font-weight: bold;
+
+  color: #444;
+
+  cursor: pointer;
+
+}
+
+
+
+.period-button.active {
+
+  background: #2878c7;
+
+  color: white;
+
+  border-color: #2878c7;
+
+}
+
+
+
+.calculate {
+
+  width: 100%;
+
+  height: 52px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #2878c7;
+
+  color: white;
+
+  font-size: 17px;
+
+  font-weight: bold;
+
+  margin-top: 17px;
+
+  cursor: pointer;
+
+}
+
+
+
+.result {
+
+  display: none;
+
+}
+
+
+
+.result-title {
+
+  font-weight: bold;
+
+  font-size: 15px;
+
+  margin-bottom: 12px;
+
+}
+
+
+
+.net-box {
+
+  background: #edf5ff;
+
+  border-radius: 10px;
+
+  padding: 22px 12px;
+
+  text-align: center;
+
+  margin-bottom: 18px;
+
+}
+
+
+
+.net-label {
+
+  font-size: 14px;
+
+  color: #456;
+
+  font-weight: bold;
+
+}
+
+
+
+.net-amount {
+
+  font-size: 34px;
+
+  font-weight: bold;
+
+  color: #1767ad;
+
+  margin-top: 10px;
+
+}
+
+
+
+.net-unit {
+
+  font-size: 16px;
+
+}
+
+
+
+.tax-note {
+
+  font-size: 12px;
+
+  color: #666;
+
+  margin-top: 9px;
+
+}
+
+
+
+.details {
+
+  border-top: 1px solid #ddd;
+
+  padding-top: 12px;
+
+}
+
+
+
+.detail-row {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding: 10px 0;
+
+  font-size: 14px;
+
+  border-bottom: 1px solid #eee;
+
+}
+
+
+
+.detail-row strong {
+
+  text-align: right;
+
+}
+
+
+
+.date-info {
+
+  font-size: 12px;
+
+  color: #777;
+
+  margin-bottom: 12px;
+
+  text-align: center;
+
+}
+
+
+
+.note {
+
+  font-size: 12px;
+
+  color: #777;
+
+  line-height: 1.7;
+
+  margin-top: 15px;
+
+}
+
+
+
+footer {
+
+  text-align: center;
+
+  color: #aaa;
+
+  font-size: 11px;
+
+  margin-top: 25px;
+
+}
+
+</style>
+
+</head>
+
+
+
+<body>
+
+<div class="container">
+
+
+
+<h1>普通預金 利息計算</h1>
+
+<div class="subtitle">
+
+預金残高から受け取れる利息をシミュレーション
+
+</div>
+
+
+
+<div class="section">
+
+
+
+  <label class="label">① 年利を選択</label>
+
+  <select id="rate"></select>
+
+  <div class="unit">銀行の普通預金金利を選択してください</div>
+
+
+
+</div>
+
+
+
+<div class="section">
+
+
+
+  <label class="label">② 預金残高を入力</label>
+
+  <input
+
+    type="number"
+
+    id="balance"
+
+    placeholder="例：1000000"
+
+    min="0"
+
+    step="1"
+
+    inputmode="numeric"
+
+  >
+
+  <div class="unit">円単位で入力してください</div>
+
+
+
+</div>
+
+
+
+<div class="section">
+
+
+
+  <label class="label">③ 計算期間を選択</label>
+
+
+
+  <div class="periods">
+
+    <button class="period-button active"
+
+      onclick="selectPeriod(1,this)">1日</button>
+
+
+
+    <button class="period-button"
+
+      onclick="selectPeriod(30,this)">30日</button>
+
+
+
+    <button class="period-button"
+
+      onclick="selectPeriod(180,this)">180日</button>
+
+  </div>
+
+
+
+  <button class="calculate" onclick="calculate()">
+
+    利息を計算する
+
+  </button>
+
+
+
+</div>
+
+
+
+<div class="section result" id="result">
+
+
+
+  <div class="result-title">計算結果</div>
+
+
+
+  <div class="date-info" id="dateInfo"></div>
+
+
+
+  <div class="net-box">
+
+    <div class="net-label">
+
+      税引き後の受取利息（合計）
+
+    </div>
+
+
+
+    <div class="net-amount">
+
+      <span id="net">0</span>
+
+      <span class="net-unit">円</span>
+
+    </div>
+
+
+
+    <div class="tax-note">
+
+      ※税率20.315%を差し引いた金額です。
+
+    </div>
+
+  </div>
+
+
+
+  <div class="details">
+
+
+
+    <div class="detail-row">
+
+      <span>預金残高</span>
+
+      <strong id="showBalance">0円</strong>
+
+    </div>
+
+
+
+    <div class="detail-row">
+
+      <span>適用年利</span>
+
+      <strong id="showRate">0%</strong>
+
+    </div>
+
+
+
+    <div class="detail-row">
+
+      <span>計算期間</span>
+
+      <strong id="showDays">0日</strong>
+
+    </div>
+
+
+
+  </div>
+
+
+
+  <div class="note">
+
+    ※1年を365日として日割り計算しています。<br>
+
+    ※計算結果は、利息・所得税・住民税それぞれの1円未満を切り捨てた概算値です。<br>
+
+    ※実際の銀行の利息計算・端数処理とは異なる場合があります。
+
+  </div>
+
+
+
+</div>
+
+
+
+<footer>
+
+普通預金 利息シミュレーション
+
+</footer>
+
+<footer>
+
+  <br>
+
+  最終更新日：2026年11月17日
+
+</footer>
+
+</div>
+
+
+
+<script>
+
+
+
+// 金利プルダウン
+
+const rateSelect = document.getElementById("rate");
+
+
+
+for (let i = 1; i <= 100; i++) {
+
+  let value = (i / 100).toFixed(2);
+
+  let option = document.createElement("option");
+
+
+
+  option.value = value;
+
+  option.textContent = value + "%";
+
+
+
+  if (value === "0.30") {
+
+    option.selected = true;
+
+  }
+
+
+
+  rateSelect.appendChild(option);
+
+}
+
+
+
+for (let i = 110; i <= 500; i += 10) {
+
+  let value = (i / 100).toFixed(2);
+
+  let option = document.createElement("option");
+
+
+
+  option.value = value;
+
+  option.textContent = value + "%";
+
+
+
+  rateSelect.appendChild(option);
+
+}
+
+
+
+let selectedDays = 1;
+
+
+
+// 計算期間の選択
+
+function selectPeriod(days, button) {
+
+  selectedDays = days;
+
+
+
+  document.querySelectorAll(".period-button")
+
+    .forEach(btn => btn.classList.remove("active"));
+
+
+
+  button.classList.add("active");
+
+}
+
+
+
+// 円表示
+
+function yen(value) {
+
+  return Math.floor(value).toLocaleString("ja-JP") + "円";
+
+}
+
+
+
+// 日付表示
+
+function formatDate(date) {
+
+  return date.getFullYear() + "年" +
+
+    (date.getMonth() + 1) + "月" +
+
+    date.getDate() + "日";
+
+}
+
+
+
+// 利息計算
+
+function calculate() {
+
+
+
+  const balance = Number(
+
+    document.getElementById("balance").value
+
+  );
+
+
+
+  const rate = Number(rateSelect.value);
+
+
+
+  if (!Number.isFinite(balance) || balance <= 0) {
+
+    alert("預金残高を正しく入力してください。");
+
+    return;
+
+  }
+
+
+
+  const days = selectedDays;
+
+
+
+  // 税引き前利息
+
+  const gross = balance * (rate / 100) * days / 365;
+
+
+
+  // 税金の計算
+
+  const incomeTax = Math.floor(gross * 0.15315);
+
+  const residentTax = Math.floor(gross * 0.05);
+
+  const totalTax = incomeTax + residentTax;
+
+
+
+  // 税引き後利息
+
+  const net = Math.floor(gross) - totalTax;
+
+
+
+  // 日付表示
+
+  const startDate = new Date();
+
+  const endDate = new Date(startDate);
+
+  endDate.setDate(endDate.getDate() + days);
+
+
+
+  document.getElementById("dateInfo").textContent =
+
+    formatDate(startDate) + " 〜 " + formatDate(endDate);
+
+
+
+  document.getElementById("showBalance").textContent =
+
+    yen(balance);
+
+
+
+  document.getElementById("showRate").textContent =
+
+    rate + "%";
+
+
+
+  document.getElementById("showDays").textContent =
+
+    days + "日";
+
+
+
+  document.getElementById("net").textContent =
+
+    net.toLocaleString("ja-JP");
+
+
+
+  document.getElementById("result").style.display = "block";
+
+
+
+  document.getElementById("result").scrollIntoView({
+
+    behavior: "smooth",
+
+    block: "start"
+
+  });
+
+}
+
+
+
+</script>
+
+
+
+</body>
+
+</html>
